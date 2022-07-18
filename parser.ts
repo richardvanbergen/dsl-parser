@@ -2,7 +2,7 @@ import {Grammar, Parser} from "https://deno.land/x/nearley@2.19.7-deno/lib/nearl
 import grammar from "./grammar.ts";
 
 export interface ParsedGrammar {
-  type: 'boolean' | 'number' | 'formula'
+  type: 'boolean' | 'number' | 'formula' | 'operator'
   value: unknown
   text: string
   offset: number
@@ -12,21 +12,38 @@ export interface ParsedGrammar {
 }
 
 export interface ParsedBoolean extends ParsedGrammar {
-  type: "boolean"
+  type: 'boolean'
   value: boolean
 }
 
 export interface ParsedNumber extends ParsedGrammar {
-  type: "number"
+  type: 'number'
   value: number
+}
+
+export interface ParsedOperator extends ParsedGrammar {
+  type: 'operator'
+  value: '+' | '-' | '*' | '/'
+}
+
+export type ParsedPrimitive = ParsedBoolean | ParsedNumber
+
+export type ParsedArithmetic = {
+  left: ParsedPrimitive
+  symbol: ParsedOperator
+  right: ParsedPrimitive
 }
 
 export interface ParsedFormula extends ParsedGrammar {
   type: "formula"
-  value: "="
+  value: ParsedNumber | ParsedArithmetic
 }
 
-export type Parsed = ParsedBoolean | ParsedNumber | ParsedFormula
+export type Parsed = ParsedPrimitive | ParsedFormula
+
+export function isParsedFormula(parsed: unknown): parsed is ParsedFormula {
+  return Array.isArray(parsed) && parsed?.[0].type === "formula"
+}
 
 export function parse(input: string) {
   const parserTest = new Parser(Grammar.fromCompiled(grammar));

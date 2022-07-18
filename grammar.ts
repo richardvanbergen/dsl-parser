@@ -4,6 +4,7 @@
 // @ts-ignore
 function id(d: any[]): any { return d[0]; }
 declare var formula: any;
+declare var operator: any;
 declare var number: any;
 declare var boolean: any;
 
@@ -50,7 +51,16 @@ const grammar: Grammar = {
     {"name": "main", "symbols": ["number"]},
     {"name": "main", "symbols": ["formula"]},
     {"name": "formula", "symbols": ["formula_identifier", "number"]},
+    {"name": "formula", "symbols": ["formula_identifier", "arithmetic"]},
     {"name": "formula_identifier", "symbols": [(lexer.has("formula") ? {type: "formula"} : formula)], "postprocess": id},
+    {"name": "arithmetic", "symbols": ["number", "_", "operator", "_", "number"], "postprocess":  data => {
+            return {
+                left: data[0],
+                symbol: data[2],
+                right: data[4]
+            }
+        } },
+    {"name": "operator", "symbols": [(lexer.has("operator") ? {type: "operator"} : operator)], "postprocess": id},
     {"name": "number", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess":  data => {
             const parsed = data[0]
             if (parsed) {
