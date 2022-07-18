@@ -1,0 +1,18 @@
+{
+  "name": "dsl-parser",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "moo": "^0.5.1",
+    "nearley": "^2.20.1",
+    "nearly": "^1.8.1"
+  },
+  "scripts": {
+    "build": "nearleyc ./grammar.ne --out ./grammar.ts",
+    "test": "yarn build && deno run lexer.test.ts"
+  },
+  "devDependencies": {
+    "vitest": "^0.18.1"
+  }
+}
