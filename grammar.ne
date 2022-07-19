@@ -52,32 +52,33 @@ number -> %number
     } %}
     | function {% id %}
 
-function -> identifier _ "(" _ function_param:* _ ")"
+function -> identifier _ "(" _ parameter_list:* _ ")"
     {% data => {
         data[0].type = "function"
+        const params = data[4]?.[0] ?? []
         data[0].value = {
             name: data[0].text,
-            params: data[4]
+            params
         }
 
         return data[0]
      }%}
 
-function_param
-    -> arithmetic _ "," _ function_param
+parameter_list
+    -> function_param _ "," _ parameter_list
         {% data => {
             const funcParam = Array.isArray(data[4]) ? data[4] : [data[4]]
             return [data[0], ...funcParam]
-         }%}
-    | boolean _ "," _ function_param
-        {% data => {
-            const funcParam = Array.isArray(data[4]) ? data[4] : [data[4]]
-            return [data[0], ...funcParam]
-         }%}
-    | arithmetic {% id %}
-    | boolean {% id %}
+        } %}
+    | function_param
+
+function_param -> arithmetic {% id %}
+                | boolean  {% id %}
+                | string {% id %}
 
 identifier -> %identifier {% id %}
+
+string -> %string {% id %}
 
 boolean -> %boolean
     {% data => {

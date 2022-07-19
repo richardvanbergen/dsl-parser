@@ -11,6 +11,7 @@ declare var divide: any;
 declare var exponent: any;
 declare var number: any;
 declare var identifier: any;
+declare var string: any;
 declare var boolean: any;
 
 import lexer from "./lexer.ts"
@@ -82,27 +83,27 @@ const grammar: Grammar = {
         } },
     {"name": "number", "symbols": ["function"], "postprocess": id},
     {"name": "function$ebnf$1", "symbols": []},
-    {"name": "function$ebnf$1", "symbols": ["function$ebnf$1", "function_param"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "function$ebnf$1", "symbols": ["function$ebnf$1", "parameter_list"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "function", "symbols": ["identifier", "_", {"literal":"("}, "_", "function$ebnf$1", "_", {"literal":")"}], "postprocess":  data => {
            data[0].type = "function"
+           const params = data[4]?.[0] ?? []
            data[0].value = {
                name: data[0].text,
-               params: data[4]
+               params
            }
         
            return data[0]
         }},
-    {"name": "function_param", "symbols": ["arithmetic", "_", {"literal":","}, "_", "function_param"], "postprocess":  data => {
-           const funcParam = Array.isArray(data[4]) ? data[4] : [data[4]]
-           return [data[0], ...funcParam]
-        }},
-    {"name": "function_param", "symbols": ["boolean", "_", {"literal":","}, "_", "function_param"], "postprocess":  data => {
-           const funcParam = Array.isArray(data[4]) ? data[4] : [data[4]]
-           return [data[0], ...funcParam]
-        }},
+    {"name": "parameter_list", "symbols": ["function_param", "_", {"literal":","}, "_", "parameter_list"], "postprocess":  data => {
+            const funcParam = Array.isArray(data[4]) ? data[4] : [data[4]]
+            return [data[0], ...funcParam]
+        } },
+    {"name": "parameter_list", "symbols": ["function_param"]},
     {"name": "function_param", "symbols": ["arithmetic"], "postprocess": id},
     {"name": "function_param", "symbols": ["boolean"], "postprocess": id},
+    {"name": "function_param", "symbols": ["string"], "postprocess": id},
     {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": id},
+    {"name": "string", "symbols": [(lexer.has("string") ? {type: "string"} : string)], "postprocess": id},
     {"name": "boolean", "symbols": [(lexer.has("boolean") ? {type: "boolean"} : boolean)], "postprocess":  data => {
             const parsed = data[0]
             if (parsed) {
