@@ -2,7 +2,7 @@ import {Grammar, Parser} from "https://deno.land/x/nearley@2.19.7-deno/lib/nearl
 import grammar from "./grammar.ts";
 
 export interface ParsedGrammar {
-  type: 'boolean' | 'number' | 'formula' | 'operator'
+  type: 'boolean' | 'number' | 'formula' | 'function' | 'arithmetic' | 'plus' | 'minus' | 'times' | 'divide'
   value: unknown
   text: string
   offset: number
@@ -21,29 +21,56 @@ export interface ParsedNumber extends ParsedGrammar {
   value: number
 }
 
-export interface ParsedOperator extends ParsedGrammar {
-  type: 'operator'
-  value: '+' | '-' | '*' | '/'
+export interface ParsedPlus extends ParsedGrammar {
+  type: 'number'
+  value: '+'
 }
 
-export type ParsedPrimitive = ParsedBoolean | ParsedNumber
+export interface ParsedMinus extends ParsedGrammar {
+  type: 'minus'
+  value: '-'
+}
+
+export interface ParsedTimes extends ParsedGrammar {
+  type: 'times'
+  value: '*'
+}
+
+export interface ParsedDivide extends ParsedGrammar {
+  type: 'divide'
+  value: '/'
+}
+
+export interface ParsedFunction extends ParsedGrammar {
+  type: 'function'
+  value: {
+    name: string
+    params: ParsedFormulaValue[]
+  }
+}
+
+export type ParsedOperation = ParsedPlus | ParsedMinus | ParsedTimes | ParsedDivide
+export type ParsedFormulaValue =
+  ParsedArithmetic |
+  ParsedBoolean |
+  ParsedNumber |
+  ParsedFunction
 
 export type ParsedArithmetic = {
-  left: ParsedPrimitive
-  symbol: ParsedOperator
-  right: ParsedPrimitive
+  type: "arithmetic",
+  operation: {
+    left: ParsedArithmetic | ParsedNumber,
+    operator: ParsedOperation,
+    right: ParsedArithmetic | ParsedNumber
+  }
 }
 
 export interface ParsedFormula extends ParsedGrammar {
   type: "formula"
-  value: ParsedNumber | ParsedArithmetic
+  value: ParsedArithmetic | ParsedBoolean | ParsedNumber | ParsedFunction
 }
 
-export type Parsed = ParsedPrimitive | ParsedFormula
-
-export function isParsedFormula(parsed: unknown): parsed is ParsedFormula {
-  return Array.isArray(parsed) && parsed?.[0].type === "formula"
-}
+export type Parsed = ParsedFormula
 
 export function parse(input: string) {
   const parserTest = new Parser(Grammar.fromCompiled(grammar));

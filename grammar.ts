@@ -4,8 +4,13 @@
 // @ts-ignore
 function id(d: any[]): any { return d[0]; }
 declare var formula: any;
-declare var operator: any;
+declare var plus: any;
+declare var minus: any;
+declare var times: any;
+declare var divide: any;
+declare var exponent: any;
 declare var number: any;
+declare var identifier: any;
 declare var boolean: any;
 
 import lexer from "./lexer.ts"
@@ -47,20 +52,27 @@ const grammar: Grammar = {
     {"name": "__$ebnf$1", "symbols": ["__$ebnf$1", "wschar"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "__", "symbols": ["__$ebnf$1"], "postprocess": function(d) {return null;}},
     {"name": "wschar", "symbols": [/[ \t\n\v\f]/], "postprocess": id},
-    {"name": "main", "symbols": ["boolean"]},
-    {"name": "main", "symbols": ["number"]},
-    {"name": "main", "symbols": ["formula"]},
-    {"name": "formula", "symbols": ["formula_identifier", "number"]},
-    {"name": "formula", "symbols": ["formula_identifier", "arithmetic"]},
+    {"name": "main", "symbols": ["_", "value", "_"], "postprocess": data => data[1]},
+    {"name": "value", "symbols": ["formula"]},
+    {"name": "formula", "symbols": ["formula_identifier", "boolean"], "postprocess": data => ({ ...data[0], value: data[1] })},
+    {"name": "formula", "symbols": ["formula_identifier", "arithmetic"], "postprocess": data => ({ ...data[0], value: data[1] })},
     {"name": "formula_identifier", "symbols": [(lexer.has("formula") ? {type: "formula"} : formula)], "postprocess": id},
-    {"name": "arithmetic", "symbols": ["number", "_", "operator", "_", "number"], "postprocess":  data => {
-            return {
-                left: data[0],
-                symbol: data[2],
-                right: data[4]
-            }
-        } },
-    {"name": "operator", "symbols": [(lexer.has("operator") ? {type: "operator"} : operator)], "postprocess": id},
+    {"name": "arithmetic", "symbols": ["addition_subtraction"], "postprocess": id},
+    {"name": "addition_subtraction", "symbols": ["addition_subtraction", "_", "plus", "_", "multiplication_division"], "postprocess": data => ({ type: "arithmetic", operation: { left: data[0], operator: data[2], right: data[4] } })},
+    {"name": "addition_subtraction", "symbols": ["addition_subtraction", "_", "minus", "_", "multiplication_division"], "postprocess": data => ({ type: "arithmetic", operation: { left: data[0], operator: data[2], right: data[4] } })},
+    {"name": "addition_subtraction", "symbols": ["multiplication_division"], "postprocess": id},
+    {"name": "multiplication_division", "symbols": ["multiplication_division", "_", "times", "_", "exponent"], "postprocess": data => ({ type: "arithmetic", operation: { left: data[0], operator: data[2], right: data[4] } })},
+    {"name": "multiplication_division", "symbols": ["multiplication_division", "_", "divide", "_", "exponent"], "postprocess": data => ({ type: "arithmetic", operation: { left: data[0], operator: data[2], right: data[4] } })},
+    {"name": "multiplication_division", "symbols": ["exponent"], "postprocess": id},
+    {"name": "exponent", "symbols": ["parens", "_", "exponent", "_", "exponent"]},
+    {"name": "exponent", "symbols": ["parens"], "postprocess": id},
+    {"name": "parens", "symbols": [{"literal":"("}, "_", "arithmetic", "_", {"literal":")"}], "postprocess": data => data[2]},
+    {"name": "parens", "symbols": ["number"], "postprocess": id},
+    {"name": "plus", "symbols": [(lexer.has("plus") ? {type: "plus"} : plus)], "postprocess": id},
+    {"name": "minus", "symbols": [(lexer.has("minus") ? {type: "minus"} : minus)], "postprocess": id},
+    {"name": "times", "symbols": [(lexer.has("times") ? {type: "times"} : times)], "postprocess": id},
+    {"name": "divide", "symbols": [(lexer.has("divide") ? {type: "divide"} : divide)], "postprocess": id},
+    {"name": "exponent", "symbols": [(lexer.has("exponent") ? {type: "exponent"} : exponent)], "postprocess": id},
     {"name": "number", "symbols": [(lexer.has("number") ? {type: "number"} : number)], "postprocess":  data => {
             const parsed = data[0]
             if (parsed) {
@@ -68,6 +80,29 @@ const grammar: Grammar = {
                 return parsed
             }
         } },
+    {"name": "number", "symbols": ["function"], "postprocess": id},
+    {"name": "function$ebnf$1", "symbols": []},
+    {"name": "function$ebnf$1", "symbols": ["function$ebnf$1", "function_param"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "function", "symbols": ["identifier", "_", {"literal":"("}, "_", "function$ebnf$1", "_", {"literal":")"}], "postprocess":  data => {
+           data[0].type = "function"
+           data[0].value = {
+               name: data[0].text,
+               params: data[4]
+           }
+        
+           return data[0]
+        }},
+    {"name": "function_param", "symbols": ["arithmetic", "_", {"literal":","}, "_", "function_param"], "postprocess":  data => {
+           const funcParam = Array.isArray(data[4]) ? data[4] : [data[4]]
+           return [data[0], ...funcParam]
+        }},
+    {"name": "function_param", "symbols": ["boolean", "_", {"literal":","}, "_", "function_param"], "postprocess":  data => {
+           const funcParam = Array.isArray(data[4]) ? data[4] : [data[4]]
+           return [data[0], ...funcParam]
+        }},
+    {"name": "function_param", "symbols": ["arithmetic"], "postprocess": id},
+    {"name": "function_param", "symbols": ["boolean"], "postprocess": id},
+    {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": id},
     {"name": "boolean", "symbols": [(lexer.has("boolean") ? {type: "boolean"} : boolean)], "postprocess":  data => {
             const parsed = data[0]
             if (parsed) {
