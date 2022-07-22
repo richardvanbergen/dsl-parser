@@ -8,6 +8,7 @@ const lexer = moo.compile({
     { match: /"(?:\\["\\rn]|[^"\\])*?"/, lineBreaks: true, value: x => x.slice(1, -1) },
     { match: /'(?:\\['\\rn]|[^'\\])*?'/, lineBreaks: true, value: x => x.slice(1, -1) },
   ],
+  reference:  /\$[a-zA-Z][a-zA-Z_0-9]+/,
   formula:    '=',
   plus:       '+',
   minus:      '-',

@@ -2,7 +2,7 @@ import {Grammar, Parser} from "https://deno.land/x/nearley@2.19.7-deno/lib/nearl
 import grammar from "./grammar.ts";
 
 export interface ParsedGrammar {
-  type: 'boolean' | 'number' | 'formula' | 'function' | 'arithmetic' | 'plus' | 'minus' | 'times' | 'divide' | 'string'
+  type: 'boolean' | 'number' | 'formula' | 'function' | 'arithmetic' | 'plus' | 'minus' | 'times' | 'divide' | 'string' | 'reference'
   value: unknown
   text: string
   offset: number
@@ -46,6 +46,11 @@ export interface ParsedString extends ParsedGrammar {
   value: string
 }
 
+export interface ParsedReference extends ParsedGrammar {
+  type: 'reference'
+  value: string
+}
+
 export interface ParsedFunction extends ParsedGrammar {
   type: 'function'
   value: {
@@ -65,15 +70,15 @@ export type ParsedFormulaValue =
 export type ParsedArithmetic = {
   type: "arithmetic",
   operation: {
-    left: ParsedArithmetic | ParsedNumber,
+    left: ParsedArithmetic | ParsedNumber | ParsedReference,
     operator: ParsedOperator,
-    right: ParsedArithmetic | ParsedNumber
+    right: ParsedArithmetic | ParsedNumber | ParsedReference
   }
 }
 
 export interface ParsedFormula extends ParsedGrammar {
   type: "formula"
-  value: ParsedArithmetic | ParsedBoolean | ParsedNumber | ParsedFunction
+  value: ParsedArithmetic | ParsedBoolean | ParsedNumber | ParsedFunction | ParsedReference
 }
 
 export type Parsed = ParsedFormula

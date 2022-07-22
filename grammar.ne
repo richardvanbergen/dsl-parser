@@ -51,6 +51,7 @@ number -> %number
         }
     } %}
     | function {% id %}
+    | reference {% id %}
 
 function -> identifier _ "(" _ parameter_list:* _ ")"
     {% data => {
@@ -76,6 +77,12 @@ function_param -> arithmetic {% id %}
                 | boolean  {% id %}
                 | string {% id %}
 
+reference -> %reference
+    {% data => {
+        const [_, identifier] = data[0].value.split("$")
+        data[0].value = identifier
+        return data[0]
+    } %}
 identifier -> %identifier {% id %}
 
 string -> %string {% id %}

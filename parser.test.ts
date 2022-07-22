@@ -5,8 +5,9 @@ import {
   ParsedFormula,
   ParsedFunction,
   ParsedNumber,
-  ParsedOperator, ParsedString
+  ParsedOperator, ParsedReference, ParsedString
 } from "./parser.ts"
+
 import {assertEquals, assertThrows} from "https://deno.land/std@0.148.0/testing/asserts.ts";
 
 Deno.test("parse false", () => {
@@ -269,3 +270,44 @@ Deno.test("arithmetic whitespace test", () => {
   assertEquals(operator.value, "+")
   assertEquals(right.value, 2)
 })
+
+Deno.test("references", () => {
+  const result = parse(`
+      =$something
+   `)?.[0] as ParsedFormula
+
+  const parsedReference = result.value as ParsedReference
+
+  assertEquals(parsedReference.type, "reference")
+  assertEquals(parsedReference.value, "something")
+})
+
+Deno.test("references in arithmetic", () => {
+  const result = parse(`
+      =$something + 1
+   `)?.[0] as ParsedFormula
+
+  const parsedReference = result.value as ParsedArithmetic
+
+  assertEquals(parsedReference.type, "arithmetic")
+  assertEquals(parsedReference.operation.left.type, "reference")
+  assertEquals((parsedReference.operation.left as ParsedReference).value, "something")
+  assertEquals(parsedReference.operation.operator.value, "+")
+  assertEquals((parsedReference.operation.right as ParsedNumber).value, 1)
+})
+
+// Deno.test("references with sub identifiers", () => {
+//   const result = parse(`
+//       =$something.test
+//    `)?.[0] as ParsedFormula
+//
+//   const parsedReference = result.value as ParsedArithmetic
+//
+//   assertEquals(parsedReference.type, "arithmetic")
+//   assertEquals(parsedReference.operation.left.type, "reference")
+//   assertEquals((parsedReference.operation.left as ParsedReference).value, "something")
+//   assertEquals(parsedReference.operation.operator.value, "+")
+//   assertEquals((parsedReference.operation.right as ParsedNumber).value, 1)
+// })
+//
+// Deno.writeTextFileSync('./ast-test.json', JSON.stringify(parse("=func_party(nest1(100), 2, 4 / 2, nest2(42, 69, 'nice'), 'string', true)")))

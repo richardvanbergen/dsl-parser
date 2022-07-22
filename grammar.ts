@@ -10,6 +10,7 @@ declare var times: any;
 declare var divide: any;
 declare var exponent: any;
 declare var number: any;
+declare var reference: any;
 declare var identifier: any;
 declare var string: any;
 declare var boolean: any;
@@ -82,6 +83,7 @@ const grammar: Grammar = {
             }
         } },
     {"name": "number", "symbols": ["function"], "postprocess": id},
+    {"name": "number", "symbols": ["reference"], "postprocess": id},
     {"name": "function$ebnf$1", "symbols": []},
     {"name": "function$ebnf$1", "symbols": ["function$ebnf$1", "parameter_list"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "function", "symbols": ["identifier", "_", {"literal":"("}, "_", "function$ebnf$1", "_", {"literal":")"}], "postprocess":  data => {
@@ -102,6 +104,11 @@ const grammar: Grammar = {
     {"name": "function_param", "symbols": ["arithmetic"], "postprocess": id},
     {"name": "function_param", "symbols": ["boolean"], "postprocess": id},
     {"name": "function_param", "symbols": ["string"], "postprocess": id},
+    {"name": "reference", "symbols": [(lexer.has("reference") ? {type: "reference"} : reference)], "postprocess":  data => {
+            const [_, identifier] = data[0].value.split("$")
+            data[0].value = identifier
+            return data[0]
+        } },
     {"name": "identifier", "symbols": [(lexer.has("identifier") ? {type: "identifier"} : identifier)], "postprocess": id},
     {"name": "string", "symbols": [(lexer.has("string") ? {type: "string"} : string)], "postprocess": id},
     {"name": "boolean", "symbols": [(lexer.has("boolean") ? {type: "boolean"} : boolean)], "postprocess":  data => {
